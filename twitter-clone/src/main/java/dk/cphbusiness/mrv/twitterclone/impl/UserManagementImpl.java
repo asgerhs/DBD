@@ -33,7 +33,7 @@ public class UserManagementImpl implements UserManagement {
             "birthday", userCreation.birthday
         );
 
-        jedis.hset(key, user);
+        jedis.hmset(key, user);
         return true; 
     }
 
@@ -43,7 +43,10 @@ public class UserManagementImpl implements UserManagement {
         if(!exists) return null; 
 
         Map<String, String> user = jedis.hgetAll(username);
-        return new UserOverview(username, user.get("firstname"), user.get("lastname"), jedis.smembers("followers#" + username).size(), jedis.smembers("following#" + username).size());
+        return new UserOverview(username, user.get("firstname"), 
+        user.get("lastname"), 
+        jedis.smembers("followers#" + username).size(), 
+        jedis.smembers("following#" + username).size());
     }
 
     @Override
