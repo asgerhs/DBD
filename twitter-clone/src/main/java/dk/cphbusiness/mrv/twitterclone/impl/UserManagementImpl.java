@@ -22,11 +22,8 @@ public class UserManagementImpl implements UserManagement {
 
     @Override
     public boolean createUser(UserCreation userCreation) {
-        if(jedis.get(userCreation.username) == "nil"){
-            System.out.println(jedis.get(userCreation.username));
-            System.out.println("User already exists");
-            return false;
-        }
+        boolean exists = jedis.hexists(userCreation.username, "firstname");
+        if(exists) return false; 
 
         String key = userCreation.username;
         Map<String, String> user = Map.of(
@@ -37,41 +34,68 @@ public class UserManagementImpl implements UserManagement {
         );
 
         jedis.hset(key, user);
-        if(jedis.get(userCreation.username).length() > 1){
-            return true; 
-        } else{
-            return false; 
-        }
+        return true; 
     }
 
     @Override
     public UserOverview getUserOverview(String username) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        boolean exists = jedis.hexists(username, "firstname");
+        if(!exists) return null; 
+
+        Map<String, String> user = jedis.hgetAll(username);
+        return new UserOverview(username, user.get("firstname"), user.get("lastname"), jedis.smembers("followers#" + username).size(), jedis.smembers("following#" + username).size());
     }
 
     @Override
     public boolean updateUser(UserUpdate userUpdate) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        boolean exists = jedis.hexists(userUpdate.username, "firstname");
+        if(!exists) return false;
+        if(userUpdate.firstname != null) jedis.hset(userUpdate.username, "firstname", userUpdate.firstname);
+        if(userUpdate.lastname != null) jedis.hset(userUpdate.username, "lastname", userUpdate.lastname);
+        if(userUpdate.birthday != null) jedis.hset(userUpdate.username, "birthday", userUpdate.birthday);
+
+        return true; 
     }
 
     @Override
     public boolean followUser(String username, String usernameToFollow) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        boolean follower = jedis.hexists(usernameToFollow, "firstname");
+        boolean user = jedis.hexists(username, "firstname");
+        if(!user || !follower) return false; 
+
+        jedis.sadd("following#" + username, usernameToFollow);
+        jedis.sadd("followers#" + usernameToFollow, username);
+
+        return true; 
     }
 
     @Override
     public boolean unfollowUser(String username, String usernameToUnfollow) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        boolean follower = jedis.hexists(usernameToUnfollow, "firstname");
+        boolean user = jedis.hexists(username, "firstname");
+        if(!user || !follower) return false; 
+
+        jedis.srem("following#" + username, usernameToUnfollow);
+        jedis.srem("followers#" + usernameToUnfollow, username);
+        return true; 
     }
 
     @Override
     public Set<String> getFollowedUsers(String username) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        boolean exists = jedis.hexists(username, "firstname");
+        if(!exists) return null; 
+
+        Set<String> following = jedis.smembers("following#" + username);
+        return following; 
     }
 
     @Override
     public Set<String> getUsersFollowing(String username) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        boolean exists = jedis.hexists(username, "firstname");
+        if(!exists) return null; 
+
+        Set<String> followers = jedis.smembers("followers#" + username);
+        return followers; 
     }
 
 }

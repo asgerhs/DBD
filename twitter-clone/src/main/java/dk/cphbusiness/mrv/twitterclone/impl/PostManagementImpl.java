@@ -22,7 +22,12 @@ public class PostManagementImpl implements PostManagement {
 
     @Override
     public boolean createPost(String username, String message) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        boolean user = jedis.hexists(username, "firstname");
+        if(!user) return false; 
+        long ts = time.getCurrentTimeMillis();
+        jedis.hset("post#" + username, "" + ts, message);
+
+        return true; 
     }
 
     @Override
