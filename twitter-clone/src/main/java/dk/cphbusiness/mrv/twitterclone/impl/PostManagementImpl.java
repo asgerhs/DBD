@@ -40,7 +40,7 @@ public class PostManagementImpl implements PostManagement {
 
     @Override
     public List<Post> getPostsBetween(String username, long timeFrom, long timeTo) {
-        Map<String, String> posts = jedis.hgetAll("posts#" + username);
+        Map<String, String> posts = jedis.hgetAll("post#" + username);
         List<Post> listPosts = new ArrayList<>(); 
         for(String ts : posts.keySet()) {
             if(Long.parseLong(ts) <= timeTo && Long.parseLong(ts) >= timeFrom)
